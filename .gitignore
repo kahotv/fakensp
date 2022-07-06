@@ -1,0 +1,10 @@
+*.ncb
+*.aps
+*.vs
+*.db
+*.suo
+ipch
+Debug
+Release
+output
+output64
