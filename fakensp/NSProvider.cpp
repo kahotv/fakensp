@@ -52,9 +52,21 @@ int WSPAPI NSPLookupServiceBegin(
 {
 	OutputDebugStringW(L"[mynsp] NSPLookupServiceBegin() begin\n");
 
+
+
 	int err = WSASERVICE_NOT_FOUND;
 	do
 	{
+		//第3~9次不生效，测试由此测试移除ActiveProvider对系统造成的影响 （结论是不影响）
+		/*
+		static ULONG i = 0;
+		auto tmp = InterlockedIncrement(&i);
+		if (tmp > 3 && tmp<9)
+		{
+			err = WSASERVICE_NOT_FOUND; break;
+		}
+		*/
+
 		if (outLookup == NULL)
 		{
 			err = WSAEINVAL; break;
@@ -127,9 +139,6 @@ int WSPAPI NSPLookupServiceBegin(
 
 		*outLookup = (HANDLE)ctx;
 
-		//NSQUERY* pNsQuery = Util::SpiScanNsQuery(5);
-
-
 		err = NO_ERROR;
 	} while (false);
 
@@ -197,7 +206,11 @@ NSPLookupServiceNext(
 			err = WSA_E_NO_MORE;
 			//清空NSPProvider列表，阻止对系统和后续的NSP调用
 			//这个功能只对优先级比自身低的NSP有效
+#ifdef _WIN64
+			NSQUERY* pNsQuery = Util::SpiScanNsQuery(0x100);
+#else
 			NSQUERY* pNsQuery = Util::SpiScanNsQuery(5);
+#endif
 			if (pNsQuery != NULL)
 			{
 				//XP下若是不执行这一句，会造成自身的NSP结果被丢弃，其他系统会造成结果被排序到系统NSP之后

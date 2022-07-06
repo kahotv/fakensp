@@ -4,12 +4,56 @@
 
 NSQUERY* Util::SpiScanNsQuery(DWORD deep)
 {
-	UINT_PTR tmpebp = 0;
+	auto _isNsQuery = [](void* p) -> bool
+	{
+		if (IsBadReadPtr(p, sizeof(NSQUERY)))
+			return false;
+
+		NSQUERY* pNsQuery = (NSQUERY*)p;
+		if (pNsQuery->Signature == 0xBEADFACE)
+		{
+			return true;
+		}
+		return false;
+	};
+
 #ifdef _WIN64
-	tmpebp = (UINT_PTR)amd64_getRbp();
+
+	// 扫描寄存器
+	for (auto regId = (int)UtilAMD64RegID::Min; regId < (int)UtilAMD64RegID::Max; regId++)
+	{
+		void* p = amd64_getReg((UtilAMD64RegID)regId);
+		if (_isNsQuery(p))
+		{
+			return (NSQUERY*)p;
+		}
+	}
+
+	// 扫描堆栈
+
+	UINT_PTR tmprsp = 0;
+	tmprsp = (UINT_PTR)amd64_getReg(UtilAMD64RegID::RSP);
+	tmprsp &= ~((ULONG64)7);		//对齐8，从这里开始扫描
+	tmprsp += 0x48;
+	tmprsp += 0x90;
+	tmprsp += 0x4E0;
+	while (deep-- > 0)
+	{
+		if (IsBadReadPtr((void*)tmprsp, sizeof(void*)))
+			break;
+		NSQUERY* pNsQuery = *(NSQUERY**)(tmprsp);
+		tmprsp += sizeof(void*);
+
+		if (IsBadReadPtr(pNsQuery, sizeof(NSQUERY)))
+			continue;
+		if (pNsQuery->Signature == 0xBEADFACE)
+		{
+			return pNsQuery;
+		}
+	}
 #else
+	UINT_PTR tmpebp = 0;
 	__asm mov tmpebp, ebp;
-#endif
 	while (deep-- > 0)
 	{
 		if (IsBadReadPtr((void*)tmpebp, sizeof(void*)))
@@ -43,6 +87,7 @@ NSQUERY* Util::SpiScanNsQuery(DWORD deep)
 			return pNsQuery;
 		}
 	}
+#endif
 
 	return NULL;
 }

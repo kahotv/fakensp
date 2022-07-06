@@ -56,6 +56,9 @@
     <ClCompile Include="IPMapping.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="util_amd64.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="export.def">
@@ -63,7 +66,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="util_amd64.asm">
+    <CustomBuild Include="util_amd64asm.asm">
       <Filter>源文件</Filter>
     </CustomBuild>
   </ItemGroup>

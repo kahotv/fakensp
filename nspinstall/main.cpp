@@ -37,7 +37,7 @@ void show()
         return;
     }
     setlocale(LC_ALL, "chs");
-    wprintf(L"WSAEnumNameSpaceProviders succeeded with provider data count = %d\n", list.size());
+    wprintf(L"WSAEnumNameSpaceProviders succeeded with provider data count = %zd\n", list.size());
     for (size_t i = 0; i < list.size(); i++) 
     {
         if (list[i].dwNameSpace != NS_DNS && list[i].dwNameSpace != NS_ALL)
@@ -49,9 +49,9 @@ void show()
         if (iRet == 0)
             wprintf(L"StringFromGUID2 failed\n");
         else
-            wprintf(L"NameSpace ProviderId[%u] = %ws\n", i, GuidString);
+            wprintf(L"NameSpace ProviderId[%zu] = %ws\n", i, GuidString);
 
-        wprintf(L"NameSpace[%u] = ", i);
+        wprintf(L"NameSpace[%zu] = ", i);
         switch (list[i].dwNameSpace) {
         case NS_DNS:
             wprintf(L"Domain Name System (NS_DNS)\n");
@@ -89,13 +89,13 @@ void show()
         }
 
         if (list[i].fActive)
-            wprintf(L"Namespace[%u] is active\n", i);
+            wprintf(L"Namespace[%zu] is active\n", i);
         else
-            wprintf(L"Namespace[%u] is inactive\n", i);
+            wprintf(L"Namespace[%zu] is inactive\n", i);
 
-        wprintf(L"NameSpace Version[%u] = %u\n", i, list[i].dwVersion);
+        wprintf(L"NameSpace Version[%zu] = %u\n", i, list[i].dwVersion);
 
-        wprintf(L"Namespace Identifier[%u] = %ws\n\n", i, list[i].lpszIdentifier.c_str());
+        wprintf(L"Namespace Identifier[%zu] = %ws\n\n", i, list[i].lpszIdentifier.c_str());
     }
 }
 
@@ -112,12 +112,12 @@ void uninstall()
     }
 }
 
-void install(bool totop)
+void install(bool totop, wchar_t* dllname)
 {
     show();
     uninstall();
     show();
-    std::wstring path = GetCurrentExtDir() + L"mynspdll.dll";
+    std::wstring path = GetCurrentExtDir() + dllname;
     INT ret = WSCInstallNameSpace(L"Custom Name Space Provider",
         &path[0], NS_DNS, 1, &MY_NAMESPACE_GUID);
     if (ret == SOCKET_ERROR)
@@ -147,7 +147,7 @@ void install(bool totop)
                 //ÉèÖÃË³Ðò
                 Util::NspToGuidList(listNsp, listGuid);
                 INT r = WSCWriteNameSpaceOrder(&listGuid[0], listGuid.size());
-                printf("WSCWriteNameSpaceOrder: %d", r);
+                printf("WSCWriteNameSpaceOrder: %d\n", r);
 
             } while (false);
         }
@@ -180,7 +180,11 @@ int main(int argc, char** argv)
 
     if (!strncmp(argv[1], "install", 6))
     {
-        install(true);  // Install the name space provider
+#ifdef _WIN64
+		install(true, L"fakensp64.dll");  // Install the name space provider
+#else
+		install(true, L"fakensp.dll");  // Install the name space provider
+#endif
     }
     else if (!strncmp(argv[1], "remove", 6))
     {

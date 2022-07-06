@@ -83,7 +83,7 @@ void printAddrInfoA(ADDRINFOA* info)
             printf("getaddrinfoA response %d\n", i++);
             printf("\tFlags: 0x%x\n", ptr->ai_flags);
             printf("\tFamily: %s", GetFamilyString(ptr->ai_family));
-            printf("\tLength of this sockaddr: %d\n", ptr->ai_addrlen);
+            printf("\tLength of this sockaddr: %zd\n", ptr->ai_addrlen);
             printf("\tCanonical name: %s\n", ptr->ai_canonname);
             printf("\tAddress: %s\n", IPGetString(ptr->ai_addr).c_str());
         }
@@ -99,7 +99,7 @@ void printAddrInfoW(ADDRINFOW* info)
             printf("getaddrinfoW response %d\n", i++);
             printf("\tFlags: 0x%x\n", ptr->ai_flags);
             printf("\tFamily: %s", GetFamilyString(ptr->ai_family));
-            printf("\tLength of this sockaddr: %d\n", ptr->ai_addrlen);
+            printf("\tLength of this sockaddr: %zd\n", ptr->ai_addrlen);
             wprintf(L"\tCanonical name: %ws\n", ptr->ai_canonname);
             printf("\tAddress: %s\n", IPGetString(ptr->ai_addr).c_str());
         }
@@ -139,8 +139,6 @@ void testGetAddrInfoW(const wchar_t* name)
 
 int main()
 {
-    auto h = LoadLibraryA("mynsp.dll");
-    printf("load: %p\n", h);
     WSADATA wsaData;
     WSAStartup(0x0101, &wsaData);
     const char* name = "www.baidu.com";
