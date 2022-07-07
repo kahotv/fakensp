@@ -175,8 +175,8 @@ bool IPMapping::v6TryAddUnsafe(IN const IN6_ADDR& ip, IN const std::wstring& nam
 DWORD IPMapping::GetVirtualAddrDWORD(DWORD* now)
 {
 	//这个函数不管是否已经被使用，只负责循环生成合法的IP
-	const DWORD ipBegin = 0x7F080000;
-	const DWORD ipEnd = 0x7F800000;
+	const DWORD ipBegin = 0x7F090000;
+	const DWORD ipEnd = 0x7FFE0000;
 	DWORD ret = 0;
 
 	do

@@ -137,6 +137,10 @@ int WSPAPI NSPLookupServiceBegin(
 		ctx->Flags = inFlags;
 		ctx->Name = name;
 
+		//Proxifier的方法，阻止调用系统的NSP，因为系统检查了dwNameSpace。
+		//但其他三方NSP可能没有检查dwNameSpace（至少Proxifier没有检查），导致还是会继续调用三方NSP。
+		inQuerySet->dwNameSpace = NS_TCPIP_HOSTS;
+
 		*outLookup = (HANDLE)ctx;
 
 		err = NO_ERROR;
@@ -204,8 +208,7 @@ NSPLookupServiceNext(
 		{
 			//第二次调用时返回NO_MORE阻止继续调用Next
 			err = WSA_E_NO_MORE;
-			//清空NSPProvider列表，阻止对系统和后续的NSP调用
-			//这个功能只对优先级比自身低的NSP有效
+			//清空NSPProvider列表，阻止对后续的NSP调用(包括系统NSP和三方NSP)
 #ifdef _WIN64
 			NSQUERY* pNsQuery = Util::SpiScanNsQuery(0x100);
 #else

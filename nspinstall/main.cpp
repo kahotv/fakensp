@@ -143,7 +143,7 @@ void install(bool totop, wchar_t* dllname)
                 //只保留自己的和系统的NSP
                 //Util::NspKeepList(listNsp, listGuidKeep, NS_DNS, listNsp2);
                 //把自己的NSP提升优先级
-                Util::NspMoveTop(listNsp, MY_NAMESPACE_GUID, listNsp2);
+				Util::NspOrder(listNsp, MY_NAMESPACE_GUID, 0, listNsp2);
                 //设置顺序
                 Util::NspToGuidList(listNsp2, listGuid);
                 INT r = WSCWriteNameSpaceOrder(&listGuid[0], listGuid.size());

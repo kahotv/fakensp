@@ -106,10 +106,10 @@ void printAddrInfoW(ADDRINFOW* info)
     }
 }
 
-void testGetAddrInfoA(const char* name)
+void testGetAddrInfoA(int family, const char* name)
 {
     addrinfo req = {};
-    req.ai_family = AF_INET;
+    req.ai_family = family;
     //req.ai_socktype = 0;
     //req.ai_protocol = 0;
     req.ai_flags = AI_ALL;
@@ -147,8 +147,8 @@ int main()
     {
         system("pause");
         testGetHostByName(name);
-        testGetAddrInfoA(name);
-        testGetAddrInfoW(name2);
+        testGetAddrInfoA(AF_INET,name);
+        //testGetAddrInfoW(name2);
     }
     WSACleanup();
     system("pause");

@@ -15,7 +15,7 @@ public:
 	// 在inListNsp里搜索inGuid，返回是否存在
 	static bool Util::NspContant(const std::vector<WSANAMESPACE_INFO2W>& inListNsp, const GUID& inGuid);
 	// 把指定GUID的NSP放置到listGuid里第一位
-	static void Util::NspMoveTop(const std::vector<WSANAMESPACE_INFO2W>& inListNsp, const GUID& inGuid, std::vector<WSANAMESPACE_INFO2W>& outListNsp);
+	static void Util::NspOrder(const std::vector<WSANAMESPACE_INFO2W>& inListNsp, const GUID& inGuid, int index, std::vector<WSANAMESPACE_INFO2W>& outListNsp);
 	// 移除指定的guid
 	static void Util::NspRemoveList(const std::vector<WSANAMESPACE_INFO2W>& inListNsp, const std::vector<GUID>& inListGuidDelete, std::vector<WSANAMESPACE_INFO2W>& outListNsp);
 	// 保留指定nspType的guid，其余的移除

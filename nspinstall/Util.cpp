@@ -82,21 +82,25 @@ bool Util::NspContant(const std::vector<WSANAMESPACE_INFO2W>& inListNsp, const G
 
 	return false;
 }
-void Util::NspMoveTop(const std::vector<WSANAMESPACE_INFO2W>& inListNsp, const GUID& inGuid, std::vector<WSANAMESPACE_INFO2W>& outListNsp)
+void Util::NspOrder(const std::vector<WSANAMESPACE_INFO2W>& inListNsp, const GUID& inGuid, int index, std::vector<WSANAMESPACE_INFO2W>& outListNsp)
 {
 	outListNsp.clear();
-	outListNsp.reserve(inListNsp.size());
+	outListNsp.resize(inListNsp.size());
 
-	//先把指定的guid放到第一位
-	for (const auto& nspInfo : inListNsp) {
-		if (nspInfo.NSProviderId == inGuid) {
-			outListNsp.push_back(nspInfo);
+	//把指定的guid放到第index位（index以0开始）
+	for (size_t i = 0, n = 0; i < inListNsp.size(); i++)
+	{
+		if (inListNsp[i].NSProviderId == inGuid) 
+		{
+			outListNsp[index] = inListNsp[i];
 		}
-	}
-	//再把其余的按顺序放入
-	for (const auto& nspInfo : inListNsp) {
-		if (nspInfo.NSProviderId != inGuid) {
-			outListNsp.push_back(nspInfo);
+		else 
+		{
+			if (n == index)
+			{
+				n++;	//跳过index
+			}
+			outListNsp[n++] = inListNsp[i];
 		}
 	}
 }
