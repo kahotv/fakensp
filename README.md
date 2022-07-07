@@ -16,13 +16,60 @@ vs2015_xp
 
 ## gethostbyname
 
-
+不需要特殊处理，只要自己的NSP排在第一并正常返回，就不会再调用系统NSP。
 
 ## getaddrinfo
 
-解决了自己的NSP顺序靠后的问题，选择性跳过了系统的NSP调用。
+对于**getaddrinfo**函数，会按顺序调用所有**NSP**，最后会把系统**NSP**的结果排到第一位。
+
+假设有顺序的A、B、S三个NSP，其中S为系统**NSP**，**NSP**调用顺序如下：
+
+![doc_1](doc_1.png)
 
 
+
+## Proxifier处理NSP顺序
+
+从上图可以看出，同一套参数按顺序调用了所有的**NSP**的`NSPLookupServiceBegin`。
+
+**Proxifier**的处理办法是先把自己排在第一个**NSP**，再在`NSPLookupServiceBegin`里修改`dwNameSpace`字段：
+
+```c++
+int WSPAPI NSPLookupServiceBegin(
+	LPGUID					inProviderID,
+	LPWSAQUERYSETW			inQuerySet,
+	LPWSASERVICECLASSINFOW	inServiceClassInfo,
+	DWORD					inFlags,
+	LPHANDLE				outLookup)
+{
+  ...
+  inQuerySet->dwNameSpace = NS_TCPIP_HOSTS;		//修改dwNameSpace，防止后续NSP调用
+  ...
+}
+```
+
+这样当轮到系统NSP时，它会发现不是NS_DNS或者NS_ALL，就选择不解析，以此跳过了系统DNS解析。
+
+## fakensp处理NSP顺序
+
+由于最开始并不知道**Proxifier**的方法，我在查看**reactOS**相关代码后发现此方法可以**强制切断**对下一个**NSP**的``NSPLookupServiceNext``调用
+
+```c++
+int WSPAPI NSPLookupServiceNext(
+	HANDLE			inLookup,
+	DWORD			inFlags,
+	LPDWORD			ioSize,
+	LPWSAQUERYSETW	outResults)
+{
+	...
+	NSQUERY* pNsQuery = Util::SpiScanNsQuery(5);	//扫描出上层函数传入的NSQUERY*参数
+	if (pNsQuery != NULL)
+	{
+		pNsQuery->ActiveProvider = NULL;
+	}
+	...
+}
+```
 
 ## 参考
 
