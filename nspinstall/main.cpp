@@ -141,11 +141,11 @@ void install(bool totop, wchar_t* dllname)
                 if (!Util::NspGetAll(listNsp))
                     break;
                 //只保留自己的和系统的NSP
-                Util::NspKeepList(listNsp, listGuidKeep, NS_DNS, listNsp2);
+                //Util::NspKeepList(listNsp, listGuidKeep, NS_DNS, listNsp2);
                 //把自己的NSP提升优先级
-                Util::NspMoveTop(listNsp2, MY_NAMESPACE_GUID, listNsp);
+                Util::NspMoveTop(listNsp, MY_NAMESPACE_GUID, listNsp2);
                 //设置顺序
-                Util::NspToGuidList(listNsp, listGuid);
+                Util::NspToGuidList(listNsp2, listGuid);
                 INT r = WSCWriteNameSpaceOrder(&listGuid[0], listGuid.size());
                 printf("WSCWriteNameSpaceOrder: %d\n", r);
 

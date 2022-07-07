@@ -4,6 +4,24 @@
 
 NSQUERY* Util::SpiScanNsQuery(DWORD deep)
 {
+//NSQUERY结构有个Signature，刚好可以用来做搜索。
+//在NT架构里，往上2~3层里的第一个参数就是PNSQUERY
+//https://github.com/mirror/reactos/blob/c6d2b35ffc91e09f50dfb214ea58237509329d6b/reactos/dll/win32/ws2_32_new/src/nsquery.c
+//line 47
+/*
+DWORD WSAAPI WsNqInitialize(IN PNSQUERY Query)
+{
+	// Initialize the lock
+	InitializeCriticalSection((LPCRITICAL_SECTION)&Query->Lock);
+
+	// Set initial reference count and signature
+	Query->RefCount = 1;
+	Query->Signature = 0xBEADFACE;
+
+	// Return success
+	return ERROR_SUCCESS;
+}
+*/
 	auto _isNsQuery = [](void* p) -> bool
 	{
 		if (IsBadReadPtr(p, sizeof(NSQUERY)))
@@ -30,7 +48,6 @@ NSQUERY* Util::SpiScanNsQuery(DWORD deep)
 	}
 
 	// 扫描堆栈
-
 	UINT_PTR tmprsp = 0;
 	tmprsp = (UINT_PTR)amd64_getReg(UtilAMD64RegID::RSP);
 	tmprsp &= ~((ULONG64)7);		//对齐8，从这里开始扫描
@@ -41,12 +58,10 @@ NSQUERY* Util::SpiScanNsQuery(DWORD deep)
 	{
 		if (IsBadReadPtr((void*)tmprsp, sizeof(void*)))
 			break;
+
 		NSQUERY* pNsQuery = *(NSQUERY**)(tmprsp);
 		tmprsp += sizeof(void*);
-
-		if (IsBadReadPtr(pNsQuery, sizeof(NSQUERY)))
-			continue;
-		if (pNsQuery->Signature == 0xBEADFACE)
+		if (_isNsQuery(pNsQuery))
 		{
 			return pNsQuery;
 		}
@@ -62,27 +77,8 @@ NSQUERY* Util::SpiScanNsQuery(DWORD deep)
 		if (IsBadReadPtr((void*)(tmpebp + 8), sizeof(void*)))
 			continue;
 		NSQUERY* pNsQuery = *(NSQUERY**)(tmpebp + 8);
-		if (IsBadReadPtr(pNsQuery, sizeof(NSQUERY)))
-			continue;
-		//NSQUERY结构有个Signature，刚好可以用来做搜索。
-		//在NT架构里，往上2~3层里的第一个参数就是PNSQUERY
-		//https://github.com/mirror/reactos/blob/c6d2b35ffc91e09f50dfb214ea58237509329d6b/reactos/dll/win32/ws2_32_new/src/nsquery.c
-		//line 47
-		/*
-		DWORD WSAAPI WsNqInitialize(IN PNSQUERY Query)
-		{
-			// Initialize the lock
-			InitializeCriticalSection((LPCRITICAL_SECTION)&Query->Lock);
 
-			// Set initial reference count and signature
-			Query->RefCount = 1;
-			Query->Signature = 0xBEADFACE;
-
-			// Return success
-			return ERROR_SUCCESS;
-		}
-		*/
-		if (pNsQuery->Signature == 0xBEADFACE)
+		if (_isNsQuery(pNsQuery))
 		{
 			return pNsQuery;
 		}

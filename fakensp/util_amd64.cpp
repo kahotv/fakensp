@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "util_amd64.h"
+#ifdef _WIN64
 extern "C" void* amd64_getReg(UtilAMD64RegID id)
 {
 	switch (id)
@@ -40,3 +41,6 @@ extern "C" void* amd64_getReg(UtilAMD64RegID id)
 		return 0;
 	}
 }
+#else
+
+#endif
