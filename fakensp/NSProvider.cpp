@@ -50,9 +50,7 @@ int WSPAPI NSPLookupServiceBegin(
 	DWORD					inFlags,
 	LPHANDLE				outLookup)
 {
-	OutputDebugStringW(L"[mynsp] NSPLookupServiceBegin() begin\n");
-
-
+	TRACEX_( L"[fakensp] NSPLookupServiceBegin() begin flag: %x\n", inFlags);
 
 	int err = WSASERVICE_NOT_FOUND;
 	do
@@ -90,12 +88,33 @@ int WSPAPI NSPLookupServiceBegin(
 			err = WSASERVICE_NOT_FOUND; break;
 		}
 
+		DWORD family = 0;
+		if (IsEqualGUID(*inQuerySet->lpServiceClassId, SVCID_INET_HOSTADDRBYNAME))
+		{
+			family = AF_INET;
+		}
+		else if (IsEqualGUID(*inQuerySet->lpServiceClassId, SVCID_DNS_TYPE_A))
+		{
+			family = AF_INET;
+		}
+		else if (IsEqualGUID(*inQuerySet->lpServiceClassId, SVCID_DNS_TYPE_AAAA))
+		{
+			family = AF_INET6;
+		}
+
+		if (family == 0)
+		{
+			err = WSAEINVAL; break;
+		}
+
 		std::wstring name = inQuerySet->lpszServiceInstanceName;
 		if (UtilString::EndWith(name, L".local"))
 		{
 			//放行特殊域名
 			err = WSASERVICE_NOT_FOUND; break;
 		}
+
+
 
 		/*
 		INT family = 0;
@@ -134,6 +153,7 @@ int WSPAPI NSPLookupServiceBegin(
 			err = WSA_NOT_ENOUGH_MEMORY; break;
 		}
 
+		ctx->Family = family;
 		ctx->Flags = inFlags;
 		ctx->Name = name;
 
@@ -146,9 +166,7 @@ int WSPAPI NSPLookupServiceBegin(
 		err = NO_ERROR;
 	} while (false);
 
-	WCHAR buf2[0x200];
-	wsprintfW(buf2, L"[mynsp] NSPLookupServiceBegin end err: %d\n", err);
-	OutputDebugStringW(buf2);
+	TRACEX_(L"[fakensp] NSPLookupServiceBegin end err: %d\n", err);
 
 	if (err != NO_ERROR)
 	{
@@ -180,7 +198,7 @@ NSPLookupServiceNext(
 	LPDWORD			ioSize,
 	LPWSAQUERYSETW	outResults)
 {
-	OutputDebugStringW(L"[mynsp] NSPLookupServiceNext() begin\n");
+	TRACEX_(L"[fakensp] NSPLookupServiceNext() begin inFlags: %x\n", inFlags);
 	int err = NO_ERROR;
 
 	do
@@ -198,11 +216,14 @@ NSPLookupServiceNext(
 			err = WSA_NOT_ENOUGH_MEMORY; 
 			break;
 		}
-		OutputDebugStringW(L"[mynsp] NSPLookupServiceNext() ctx\n");
 
 		memset(outResults, 0, sizeof(*outResults));
 
 		NSContext* ctx = (NSContext*)inLookup;
+
+		TRACEX_(L"[fakensp] NSPLookupServiceNext() ctx: %p | family: %d\n", ctx, ctx->Family);
+
+
 		DWORD deep = InterlockedIncrement(&ctx->Deep);
 		if (deep == 2)
 		{
@@ -222,18 +243,65 @@ NSPLookupServiceNext(
 			break;
 		}
 
+		_ASSERT(ctx->Family == AF_INET || ctx->Family == AF_INET6);
+
 		DWORD error_now = 0;
-		IN_ADDR ip = {};
-		if (!gIPMapping.v4GeneralAndAdd(ctx->Name, 20, ip))
+		DWORD addrlen = ctx->Family == AF_INET ? sizeof(sockaddr_in) : sizeof(sockaddr_in6);
+		sockaddr* addr = (sockaddr*)alloca(addrlen); memset(addr, 0, addrlen);
+		addr->sa_family = (WORD)ctx->Family;
+
+		if (ctx->Family == AF_INET)
 		{
-			//没有可用的IP
-			err = WSA_NOT_ENOUGH_MEMORY;
-			break;
+			TRACEX_(L"[fakensp] NSPLookupServiceNext() A\n");
+			sockaddr_in* addr4 = (sockaddr_in*)addr;
+			if (!gIPMapping.v4GeneralAndAdd(ctx->Name, 20, addr4->sin_addr))
+			{
+				//没有可用的IP
+				err = WSA_NOT_ENOUGH_MEMORY;
+				break;
+			}
+		}else
+		{
+			TRACEX_(L"[fakensp] NSPLookupServiceNext() AAAA\n");
+
+			sockaddr_in6* addr6 = (sockaddr_in6*)addr;
+			if (!gIPMapping.v6GeneralAndAdd(ctx->Name, 20, addr6->sin6_addr))
+			{
+				//没有可用的IP
+				err = WSA_NOT_ENOUGH_MEMORY;
+				break;
+			}
+			addr6->sin6_addr.u.Byte[0] = 0x11;
+			addr6->sin6_addr.u.Byte[1] = 0x22;
+			addr6->sin6_addr.u.Byte[2] = 0x33;
+			addr6->sin6_addr.u.Byte[3] = 0x44;
+			addr6->sin6_addr.u.Byte[4] = 0x55;
+			addr6->sin6_addr.u.Byte[5] = 0x66;
+			addr6->sin6_addr.u.Byte[6] = 0x77;
+			addr6->sin6_addr.u.Byte[7] = 0x88;
+			addr6->sin6_addr.u.Byte[8] = 0x99;
+			addr6->sin6_addr.u.Byte[9] = 0x11;
+			addr6->sin6_addr.u.Byte[10] = 0x22;
+			addr6->sin6_addr.u.Byte[11] = 0x33;
+			addr6->sin6_addr.u.Byte[12] = 0x44;
+			addr6->sin6_addr.u.Byte[13] = 0x55;
+			addr6->sin6_addr.u.Byte[14] = 0x66;
+			addr6->sin6_addr.u.Byte[15] = 0x77;
+		}
+
+		if (ctx->Flags & LUP_API_ANSI)
+		{
+			TRACEX_(L"[fakensp] NSPLookupServiceNext() LUP_API_ANSI\n");
+			//用的getaddrinfoA
+		}
+		else 
+		{
+			//用的getaddrinfoW
 		}
 
 		if (ctx->Flags & LUP_RETURN_NAME)
 		{
-			OutputDebugStringW(L"[mynsp] NSPLookupServiceNext() LUP_RETURN_NAME\n");
+			TRACEX_(L"[fakensp] NSPLookupServiceNext() LUP_RETURN_NAME\n");
 
 			//返回域名，这个必须的
 			outResults->lpszServiceInstanceName =(WCHAR*)ctx->Name.c_str();
@@ -241,14 +309,12 @@ NSPLookupServiceNext(
 
 		if (ctx->Flags & LUP_RETURN_BLOB)
 		{
-			OutputDebugStringW(L"[mynsp] NSPLookupServiceNext() LUP_RETURN_BLOB\n");
+			TRACEX_(L"[fakensp] NSPLookupServiceNext() LUP_RETURN_BLOB\n");
 
 			//主要是gethostbyname，要求返回hostent的blob结构
 			std::string nameA = UtilString::w2s(ctx->Name);
-			sockaddr_in v4 = {};
-			v4.sin_addr = ip;
 
-			BLOB* blob = Util::PackHostEntBlob(nameA, AF_INET, (const sockaddr*)&v4, 1);
+			BLOB* blob = Util::PackHostEntBlob(nameA, ctx->Family, addr, 1);
 			if (blob == NULL)
 			{
 				//内存不足
@@ -265,44 +331,40 @@ NSPLookupServiceNext(
 
 		if (ctx->Flags & LUP_RETURN_ADDR)
 		{
-			OutputDebugStringW(L"[mynsp] NSPLookupServiceNext() LUP_RETURN_ADDR\n");
+			TRACEX_(L"[fakensp] NSPLookupServiceNext() LUP_RETURN_ADDR\n");
 
 			//主要是getaddrinfo，要求返回CSADDR_INFO的结构，非BLOB
-			CSADDR_INFO* addr = new (std::nothrow)CSADDR_INFO;
-			sockaddr_in* remote = new (std::nothrow)sockaddr_in;
-			if (addr == NULL && remote == NULL)
+			CSADDR_INFO* addrinfo = new (std::nothrow)CSADDR_INFO;
+			sockaddr* remote = (sockaddr*)new (std::nothrow)char[addrlen];
+			if (addrinfo == NULL && remote == NULL)
 			{
-				if (addr != NULL)
-					delete addr;
+				if (addrinfo != NULL)
+					delete addrinfo;
 				if (remote != NULL)
 					delete remote;
 				err = WSA_NOT_ENOUGH_MEMORY;
 				break;
 			}
 
-			memset(addr, 0, sizeof(*addr));
-			memset(remote, 0, sizeof(*remote));
+			memset(addrinfo, 0, sizeof(*addrinfo));
+			memcpy(remote, addr, addrlen);
 
-			remote->sin_family = AF_INET;
-			remote->sin_addr = ip;
-			addr->iSocketType = AF_INET;
-			addr->iProtocol = IPPROTO_UDP;
-			addr->LocalAddr.iSockaddrLength = 0;
-			addr->LocalAddr.lpSockaddr = NULL;
-			addr->RemoteAddr.iSockaddrLength = sizeof(*remote);
-			addr->RemoteAddr.lpSockaddr = (struct sockaddr*)remote;
+			addrinfo->iSocketType = SOCK_DGRAM;
+			addrinfo->iProtocol = IPPROTO_UDP;
+			addrinfo->LocalAddr.iSockaddrLength = 0;
+			addrinfo->LocalAddr.lpSockaddr = NULL;
+			addrinfo->RemoteAddr.iSockaddrLength = addrlen;
+			addrinfo->RemoteAddr.lpSockaddr = remote;
 			
 			outResults->dwNumberOfCsAddrs = 1;
-			outResults->lpcsaBuffer = addr;
-
-			ctx->AddrInfo = addr;
+			outResults->lpcsaBuffer = addrinfo;
+			outResults->dwOutputFlags = RESULT_IS_ADDED;
+			ctx->AddrInfo = addrinfo;
 		}
 
 	} while (false);
 
-	WCHAR buf2[0x200];
-	wsprintfW(buf2, L"[mynsp] NSPLookupServiceNext() end err: %d\n", err);
-	OutputDebugStringW(buf2);
+	TRACEX_(L"[fakensp] NSPLookupServiceNext() end err: %d\n", err);
 
 	if (err != NO_ERROR)
 	{
@@ -314,7 +376,7 @@ NSPLookupServiceNext(
 }
 int WSPAPI NSPLookupServiceEnd(HANDLE inLookup)
 {
-	OutputDebugStringW(L"[mynsp] NSPLookupServiceEnd()\n");
+	TRACEX_(L"[fakensp] NSPLookupServiceEnd()\n");
 
 	do
 	{
@@ -322,7 +384,6 @@ int WSPAPI NSPLookupServiceEnd(HANDLE inLookup)
 			break;
 
 		NSContext* ctx = (NSContext*)inLookup;
-		ctx->Name = L"asdsada";
 		delete ctx;
 
 	} while (false);
@@ -333,12 +394,12 @@ int WSPAPI NSPLookupServiceEnd(HANDLE inLookup)
 
 int WSPAPI NSPCleanup(LPGUID lpProviderId)
 {
-	OutputDebugStringW(L"[mynsp] NSPCleanup()\n");
+	TRACEX_(L"[fakensp] NSPCleanup()\n");
 	return NO_ERROR;
 }
 int WSPAPI NSPStartup(LPGUID inProviderID, LPNSP_ROUTINE outRoutines)
 {
-	OutputDebugStringW(L"[mynsp] NSPStartup()\n");
+	TRACEX_(L"[fakensp] NSPStartup()\n");
 
 	memset(outRoutines, 0, sizeof(NSP_ROUTINE));
 

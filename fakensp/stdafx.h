@@ -4,6 +4,7 @@
 
 #define WIN32_LEAN_AND_MEAN             // 从 Windows 头中排除极少使用的资料
 // Windows 头文件: 
+#include <SvcGuid.h>
 #include <ws2spi.h>
 #include <WS2tcpip.h>
 #include <WinSock2.h>
@@ -21,6 +22,7 @@
 
 //project
 #include "defines.h"
+#include "debug.h"
 #include "util_amd64.h"
 #include "Util.h"
 #include "IPMapping.h"

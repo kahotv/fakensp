@@ -1,5 +1,12 @@
 ﻿#pragma once
 
+#define LOG_TYPE							1
+
+#define LUP_DISABLE_IDN_ENCODING    0x00800000
+#define LUP_API_ANSI				0x01000000		//存在时，表示用的getaddrinfoA
+
+#define LUP_RESOLUTION_HANDLE		0x80000000
+
 typedef struct _NSPROVIDER
 {
 	LONG RefCount;

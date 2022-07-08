@@ -114,22 +114,24 @@ void testGetAddrInfoA(int family, const char* name)
     //req.ai_protocol = 0;
     req.ai_flags = AI_ALL;
     addrinfo* resp = NULL;
-    getaddrinfo(name, NULL, &req, &resp);
+    INT ret = getaddrinfo(name, NULL, &req, &resp);
+    printf("getaddrinfo ret :%d\n", ret);
     if (resp != NULL) 
     {
         printAddrInfoA(resp);
         freeaddrinfo(resp);
     }
 }
-void testGetAddrInfoW(const wchar_t* name)
+void testGetAddrInfoW(int family, const wchar_t* name)
 {
     ADDRINFOW req = {};
-    req.ai_family = AF_INET;
+    req.ai_family = family;
     //req.ai_socktype = 0;
     //req.ai_protocol = 0;
     req.ai_flags = AI_ALL;
     ADDRINFOW* resp = NULL;
-    GetAddrInfoW(name, NULL, &req, &resp);
+    INT ret = GetAddrInfoW(name, NULL, &req, &resp);
+    printf("getaddrinfo ret :%d\n", ret);
     if (resp != NULL) {
 
         printAddrInfoW(resp);
@@ -148,7 +150,10 @@ int main()
         system("pause");
         testGetHostByName(name);
         testGetAddrInfoA(AF_INET,name);
-        //testGetAddrInfoW(name2);
+        testGetAddrInfoW(AF_INET, name2);
+        printf("=============================================\n");
+        testGetAddrInfoA(AF_INET6, name);
+        testGetAddrInfoW(AF_INET6, name2);
     }
     WSACleanup();
     system("pause");

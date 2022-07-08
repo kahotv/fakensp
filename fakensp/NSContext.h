@@ -2,7 +2,7 @@
 class NSContext
 {
 public:
-	NSContext() : Flags(0), Deep(0), AddrInfo(NULL), Blob(NULL) {}
+	NSContext() :Family(0), Flags(0), Deep(0), AddrInfo(NULL), Blob(NULL) {}
 	~NSContext()
 	{
 		if (Blob != NULL)
@@ -29,6 +29,7 @@ public:
 
 
 public:
+	DWORD Family;		//AF_INET or AF_INET6
 	DWORD Flags;		//记录NSPLookupServiceBegin里的inFlags参数，只在NSPLookupServiceNext里使用
 	std::wstring Name;	//域名
 

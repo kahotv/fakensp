@@ -92,6 +92,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="debug.h" />
     <ClInclude Include="defines.h" />
     <ClInclude Include="IPMapping.h" />
     <ClInclude Include="NSContext.h" />
