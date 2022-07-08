@@ -33,11 +33,11 @@ void show()
     std::vector< WSANAMESPACE_INFO2W> list;
     if (!(Util::NspGetAll(list)))
     {
-        printf("error: %d", WSAGetLastError());
+        printf("取NSP列表失败 err: %d", WSAGetLastError());
         return;
     }
     setlocale(LC_ALL, "chs");
-    wprintf(L"WSAEnumNameSpaceProviders succeeded with provider data count = %zd\n", list.size());
+    wprintf(L"NSP数量: %zd\n", list.size());
     for (size_t i = 0; i < list.size(); i++) 
     {
         if (list[i].dwNameSpace != NS_DNS && list[i].dwNameSpace != NS_ALL)
@@ -49,7 +49,7 @@ void show()
         if (iRet == 0)
             wprintf(L"StringFromGUID2 failed\n");
         else
-            wprintf(L"NameSpace ProviderId[%zu] = %ws\n", i, GuidString);
+            wprintf(L"NameSpace[%zu] GUID = %ws\n", i, GuidString);
 
         wprintf(L"NameSpace[%zu] = ", i);
         switch (list[i].dwNameSpace) {
@@ -89,13 +89,13 @@ void show()
         }
 
         if (list[i].fActive)
-            wprintf(L"Namespace[%zu] is active\n", i);
+            wprintf(L"Namespace[%zu] is 活动状态\n", i);
         else
-            wprintf(L"Namespace[%zu] is inactive\n", i);
+            wprintf(L"Namespace[%zu] is 非活动状态\n", i);
 
-        wprintf(L"NameSpace Version[%zu] = %u\n", i, list[i].dwVersion);
+        wprintf(L"NameSpace[%zu] Version = %u\n", i, list[i].dwVersion);
 
-        wprintf(L"Namespace Identifier[%zu] = %ws\n\n", i, list[i].lpszIdentifier.c_str());
+        wprintf(L"Namespace[%zu] Identifier = %ws\n\n", i, list[i].lpszIdentifier.c_str());
     }
 }
 
@@ -104,30 +104,30 @@ void uninstall()
     INT ret = WSCUnInstallNameSpace(&MY_NAMESPACE_GUID);
     if (ret == SOCKET_ERROR)
     {
-        printf("Failed to remove provider: %d\n", WSAGetLastError());
+        printf("卸载FakeNSP失败 err: %d\n", WSAGetLastError());
     }
     else
     {
-        printf("Successfully removed name space provider\n");
+        printf("卸载FakeNSP成功\n");
     }
 }
 
 void install(bool totop, wchar_t* dllname)
 {
-    show();
+    //show();
     uninstall();
-    show();
+    //show();
     std::wstring path = GetCurrentExtDir() + dllname;
-    INT ret = WSCInstallNameSpace(L"Custom Name Space Provider",
+    INT ret = WSCInstallNameSpace(L"Fake NSP",
         &path[0], NS_DNS, 1, &MY_NAMESPACE_GUID);
     if (ret == SOCKET_ERROR)
     {
-        printf("Failed to install name space provider: %d\n",
+        printf("安装失败 err: %d\n",
             WSAGetLastError());
     }
     else
     {
-        printf("Successfully installed name space provider\n");
+        printf("安装FakeNSP成功\n");
         if (totop)
         {
             //提升优先级
@@ -147,7 +147,14 @@ void install(bool totop, wchar_t* dllname)
                 //设置顺序
                 Util::NspToGuidList(listNsp2, listGuid);
                 INT r = WSCWriteNameSpaceOrder(&listGuid[0], listGuid.size());
-                printf("WSCWriteNameSpaceOrder: %d\n", r);
+                if (r == 0)
+                {
+                    printf("NSP排序成功\n");
+                }
+                else
+                {
+                    printf("NSP排序失败  ret: %d, err: %d\n", r, WSAGetLastError());
+                }
 
             } while (false);
         }
@@ -158,45 +165,39 @@ void install(bool totop, wchar_t* dllname)
 int main(int argc, char** argv)
 {
     WSADATA        wsd;
-    char* ptr;
-
-    // Check for the appropriate number of arguments.
-    if (argc != 2)
-    {
-        printf("usage: %s install | remove\n", argv[0]);
-        return -1;
-    }
 
     if (WSAStartup(MAKEWORD(2, 2), &wsd) != 0)
     {
-        printf("WSAStartup() failed: %d\n", GetLastError());
+        printf("WSAStartup() 失败 err: %d\n", GetLastError());
         return -1;
     }
 
-    // Convert any arguments to lower case
-    ptr = argv[1];
-    while (*ptr)
-        *ptr++ = tolower(*ptr);
-
-    if (!strncmp(argv[1], "install", 6))
+    while (true)
     {
+        std::string cmd;
+        
+        printf("输入指令: \n1 安装\n2 卸载\n3 展示\n");
+        std::cin >> cmd;
+        if (cmd == "1")
+        {
 #ifdef _WIN64
-		install(true, L"fakensp64.dll");  // Install the name space provider
+            install(true, L"fakensp64.dll");  // Install the name space provider
 #else
-		install(true, L"fakensp.dll");  // Install the name space provider
+            install(true, L"fakensp.dll");  // Install the name space provider
 #endif
-    }
-    else if (!strncmp(argv[1], "remove", 6))
-    {
-        uninstall();    // Remove the name space provider
-    }
-    else if (!strncmp(argv[1], "show", 4))
-    {
-        show();         // Show
-    }
-    else
-    {
-        printf("usage: %s install | remove\n", argv[0]);
+        }
+        else if (cmd == "2")
+        {
+            uninstall();
+        }
+        else if(cmd == "3")
+        {
+            show();
+        }
+        else 
+        {
+            printf("未知的命令\n");
+        }
     }
 
     WSACleanup();

@@ -12,6 +12,29 @@
 
 vs2015_xp
 
+## 使用
+
+TestNSP(64).exe里对`aaaa.kaho.tv`用GetHostByName解析了IPv4，用GetAddrInfo解析了IPv4和IPv6。
+
+此域名正常结果应该是
+
+```
+C:\Users\admin>nslookup aaaa.kaho.tv
+服务器:  public1.114dns.com
+Address:  114.114.114.114
+
+非权威应答:
+名称:    aaaa.kaho.tv
+Addresses:  2a00:8642:1000:1::3
+          47.56.236.129
+```
+
+用以下步骤测试NSP劫持效果
+
+1、管理员权限启动`install(64).exe`，并输入`1`进行安装FakeNSP。
+
+2、安装成功后，打开TestNSP(64).exe，输入任意键，会展示Fake IP。
+
 
 
 ## gethostbyname

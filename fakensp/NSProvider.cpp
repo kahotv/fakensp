@@ -142,7 +142,7 @@ int WSPAPI NSPLookupServiceBegin(
 
 		//限制进程
 		std::wstring path = UtilString::ToLower(Util::GetCurrentExePath());
-		if (!UtilString::EndWith(path, L"testnsp.exe") && name != L"www.baidu.com")
+		if (!(UtilString::EndWith(path, L"testnsp.exe") || UtilString::EndWith(path, L"testnsp64.exe") || name == L"aaaa.kaho.tv"))
 		{
 			err = WSAEINVAL; break;
 		}
@@ -271,22 +271,6 @@ NSPLookupServiceNext(
 				err = WSA_NOT_ENOUGH_MEMORY;
 				break;
 			}
-			addr6->sin6_addr.u.Byte[0] = 0x11;
-			addr6->sin6_addr.u.Byte[1] = 0x22;
-			addr6->sin6_addr.u.Byte[2] = 0x33;
-			addr6->sin6_addr.u.Byte[3] = 0x44;
-			addr6->sin6_addr.u.Byte[4] = 0x55;
-			addr6->sin6_addr.u.Byte[5] = 0x66;
-			addr6->sin6_addr.u.Byte[6] = 0x77;
-			addr6->sin6_addr.u.Byte[7] = 0x88;
-			addr6->sin6_addr.u.Byte[8] = 0x99;
-			addr6->sin6_addr.u.Byte[9] = 0x11;
-			addr6->sin6_addr.u.Byte[10] = 0x22;
-			addr6->sin6_addr.u.Byte[11] = 0x33;
-			addr6->sin6_addr.u.Byte[12] = 0x44;
-			addr6->sin6_addr.u.Byte[13] = 0x55;
-			addr6->sin6_addr.u.Byte[14] = 0x66;
-			addr6->sin6_addr.u.Byte[15] = 0x77;
 		}
 
 		if (ctx->Flags & LUP_API_ANSI)

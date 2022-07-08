@@ -110,12 +110,12 @@ void testGetAddrInfoA(int family, const char* name)
 {
     addrinfo req = {};
     req.ai_family = family;
-    //req.ai_socktype = 0;
-    //req.ai_protocol = 0;
-    req.ai_flags = AI_ALL;
+    req.ai_socktype = SOCK_STREAM;
+    req.ai_protocol = IPPROTO_TCP;
+    req.ai_flags = AI_V4MAPPED | AI_ALL;
     addrinfo* resp = NULL;
-    INT ret = getaddrinfo(name, NULL, &req, &resp);
-    printf("getaddrinfo ret :%d\n", ret);
+    INT ret = GetAddrInfoA(name, NULL, &req, &resp);
+    printf("GetAddrInfoA ret :%d\n", ret);
     if (resp != NULL) 
     {
         printAddrInfoA(resp);
@@ -126,12 +126,12 @@ void testGetAddrInfoW(int family, const wchar_t* name)
 {
     ADDRINFOW req = {};
     req.ai_family = family;
-    //req.ai_socktype = 0;
-    //req.ai_protocol = 0;
-    req.ai_flags = AI_ALL;
+    req.ai_socktype = SOCK_STREAM;
+    req.ai_protocol = IPPROTO_TCP;
+    req.ai_flags = AI_V4MAPPED | AI_ALL;
     ADDRINFOW* resp = NULL;
     INT ret = GetAddrInfoW(name, NULL, &req, &resp);
-    printf("getaddrinfo ret :%d\n", ret);
+    printf("GetAddrInfoW ret :%d\n", ret);
     if (resp != NULL) {
 
         printAddrInfoW(resp);
@@ -142,18 +142,18 @@ void testGetAddrInfoW(int family, const wchar_t* name)
 int main()
 {
     WSADATA wsaData;
-    WSAStartup(0x0101, &wsaData);
-    const char* name = "www.baidu.com";
-    const wchar_t* name2 = L"www.baidu.com";
+    WSAStartup(MAKEWORD(2,2), &wsaData);
+    const char* name = "aaaa.kaho.tv";
+    const wchar_t* name2 = L"aaaa.kaho.tv";
     while (true)
     {
         system("pause");
         testGetHostByName(name);
         testGetAddrInfoA(AF_INET,name);
-        testGetAddrInfoW(AF_INET, name2);
+        //testGetAddrInfoW(AF_INET, name2);
         printf("=============================================\n");
         testGetAddrInfoA(AF_INET6, name);
-        testGetAddrInfoW(AF_INET6, name2);
+        //testGetAddrInfoW(AF_INET6, name2);
     }
     WSACleanup();
     system("pause");
