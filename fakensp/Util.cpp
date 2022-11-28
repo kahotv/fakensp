@@ -2,7 +2,7 @@
 #include "Util.h"
 
 
-NSQUERY* Util::SpiScanNsQuery(DWORD deep)
+NSQUERY* Util::SpiScanNsQuery(DWORD begin, DWORD deep)
 {
 //NSQUERY结构有个Signature，刚好可以用来做搜索。
 //在NT架构里，往上2~3层里的第一个参数就是PNSQUERY
@@ -51,9 +51,10 @@ DWORD WSAAPI WsNqInitialize(IN PNSQUERY Query)
 	UINT_PTR tmprsp = 0;
 	tmprsp = (UINT_PTR)amd64_getReg(UtilAMD64RegID::RSP);
 	tmprsp &= ~((ULONG64)7);		//对齐8，从这里开始扫描
-	tmprsp += 0x48;
-	tmprsp += 0x90;
-	tmprsp += 0x4E0;
+	tmprsp += begin;
+	//tmprsp += 0x48;
+	//tmprsp += 0x90;
+	//tmprsp += 0x4E0;
 	while (deep-- > 0)
 	{
 		if (IsBadReadPtr((void*)tmprsp, sizeof(void*)))

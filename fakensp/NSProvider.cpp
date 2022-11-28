@@ -231,10 +231,11 @@ NSPLookupServiceNext(
 			err = WSA_E_NO_MORE;
 			//清空NSPProvider列表，阻止对后续的NSP调用(包括系统NSP和三方NSP)
 #ifdef _WIN64
-			NSQUERY* pNsQuery = Util::SpiScanNsQuery(0x100);
+			NSQUERY* pNsQuery = Util::SpiScanNsQuery(0, 0x1000);		//从当前RSP+0扫描到RSP+0x1000，范围越大越准，但也越慢
 #else
-			NSQUERY* pNsQuery = Util::SpiScanNsQuery(5);
+			NSQUERY* pNsQuery = Util::SpiScanNsQuery(0, 5);
 #endif
+			TRACEX_(L"[fakensp] NSPLookupServiceNext() ctx: %p | family: %d | pNsQuery: %p\n", ctx, ctx->Family, pNsQuery);
 			if (pNsQuery != NULL)
 			{
 				//XP下若是不执行这一句，会造成自身的NSP结果被丢弃，其他系统会造成结果被排序到系统NSP之后

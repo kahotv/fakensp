@@ -5,7 +5,7 @@ class Util
 public:
 	/* Network */
 	// 从堆栈里扫描上层的NSQUERY参数，可指定扫描深度
-	static NSQUERY* SpiScanNsQuery(DWORD deep);
+	static NSQUERY* SpiScanNsQuery(DWORD begin, DWORD deep);
 	// 生成HOSTENT的BLOB形式
 	static BLOB* PackHostEntBlob(IN const std::string& hostname, IN DWORD family, IN const sockaddr* addrlist, IN DWORD addrnum);
 
