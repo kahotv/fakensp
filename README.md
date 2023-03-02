@@ -1,3 +1,7 @@
+# 已知问题
+
+- 对winhttp劫持有问题。
+
 ## 说明
 
 - 实现gethostbyname、getaddrinfo返回虚拟IP
